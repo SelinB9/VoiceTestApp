@@ -6,50 +6,156 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
+  Alert,
 } from 'react-native';
-import AppleSpeechManager from '../utils/AppleSpeechManager';
+import AppleSpeechManager from '../utils/AppleSpeechEngine';
+import WhisperManager from '../utils/WhisperEngine';
+// import SherpaManager from '../utils/SherpaEngine';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const LessonScreen = () => {
   const [transcribedText, setTranscribedText] = useState('');
   const [isLessonActive, setIsLessonActive] = useState(false);
+  const [activeEngine, setActiveEngine] = useState('Apple');
 
   const handleStartLesson = useCallback(async () => {
     try {
       setIsLessonActive(true);
       setTranscribedText('');
       
-      // Start voice recognition with callback
-      await AppleSpeechManager.startSearching((text) => {
-        setTranscribedText(text);
-      });
+      // Start voice recognition with callback based on active engine
+      if (activeEngine === 'Apple') {
+        await AppleSpeechManager.startSearching((text) => {
+          setTranscribedText(text);
+        });
+      } else if (activeEngine === 'Whisper') {
+        await WhisperManager.startSearching((text) => {
+          setTranscribedText(text);
+        });
+      } else if (activeEngine === 'Sherpa') {
+        // Sherpa engine not implemented yet
+        Alert.alert('Sherpa Engine', 'Sherpa engine henüz implement edilmedi.');
+        setIsLessonActive(false);
+      }
     } catch (error) {
       console.error('Error starting lesson:', error);
       setIsLessonActive(false);
+      Alert.alert(
+        'Hata', 
+        `Ders başlatılamadı: ${error.message || error.toString()}`,
+        [{ text: 'Tamam' }]
+      );
     }
-  }, []);
+  }, [activeEngine]);
 
   const handleStopLesson = useCallback(async () => {
     try {
-      await AppleSpeechManager.stopSearching();
+      // Stop voice recognition based on active engine
+      if (activeEngine === 'Apple') {
+        await AppleSpeechManager.stopSearching();
+      } else if (activeEngine === 'Whisper') {
+        await WhisperManager.stopSearching();
+      } else if (activeEngine === 'Sherpa') {
+        // Sherpa engine not implemented yet
+      }
       setIsLessonActive(false);
     } catch (error) {
       console.error('Error stopping lesson:', error);
     }
-  }, []);
+  }, [activeEngine]);
 
   // Cleanup when component unmounts
   useEffect(() => {
     return () => {
       if (isLessonActive) {
-        AppleSpeechManager.stopSearching();
+        if (activeEngine === 'Apple') {
+          AppleSpeechManager.stopSearching();
+        } else if (activeEngine === 'Whisper') {
+          WhisperManager.stopSearching();
+        } else if (activeEngine === 'Sherpa') {
+          // Sherpa engine not implemented yet
+        }
       }
     };
-  }, [isLessonActive]);
+  }, [isLessonActive, activeEngine]);
 
   return (
     <View style={styles.container}>
+      {/* Engine Selector Buttons - At the very top */}
+      <View style={styles.engineSelectorContainer}>
+        <View style={styles.engineSelector}>
+          <TouchableOpacity
+            style={[
+              styles.engineButton,
+              activeEngine === 'Apple' && styles.engineButtonActive,
+            ]}
+            onPress={() => {
+              if (isLessonActive) {
+                Alert.alert('Uyarı', 'Lütfen önce dersi durdurun.');
+                return;
+              }
+              setActiveEngine('Apple');
+            }}
+          >
+            <Text
+              style={[
+                styles.engineButtonText,
+                activeEngine === 'Apple' && styles.engineButtonTextActive,
+              ]}
+            >
+              Apple
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[
+              styles.engineButton,
+              activeEngine === 'Whisper' && styles.engineButtonActive,
+            ]}
+            onPress={() => {
+              if (isLessonActive) {
+                Alert.alert('Uyarı', 'Lütfen önce dersi durdurun.');
+                return;
+              }
+              setActiveEngine('Whisper');
+            }}
+          >
+            <Text
+              style={[
+                styles.engineButtonText,
+                activeEngine === 'Whisper' && styles.engineButtonTextActive,
+              ]}
+            >
+              Whisper
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[
+              styles.engineButton,
+              activeEngine === 'Sherpa' && styles.engineButtonActive,
+            ]}
+            onPress={() => {
+              if (isLessonActive) {
+                Alert.alert('Uyarı', 'Lütfen önce dersi durdurun.');
+                return;
+              }
+              setActiveEngine('Sherpa');
+            }}
+          >
+            <Text
+              style={[
+                styles.engineButtonText,
+                activeEngine === 'Sherpa' && styles.engineButtonTextActive,
+              ]}
+            >
+              Sherpa
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       {/* Top Section - Teacher Area */}
       <View style={styles.topSection}>
         <View style={styles.teacherHeader}>
@@ -98,6 +204,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 60, // Space for notch
+  },
+  engineSelectorContainer: {
+    backgroundColor: '#FFFFFF',
+    paddingTop: 10,
+    paddingBottom: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
   },
   topSection: {
     flex: 1,
@@ -155,10 +269,10 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   headerText: {
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: '750',
     color: '#1976D2',
-    textTransform: 'lowercase',
+    textTransform: 'uppercase',
   },
   statusText: {
     fontSize: 14,
@@ -178,6 +292,34 @@ const styles = StyleSheet.create({
     color: '#1565C0', // Dark blue
     fontWeight: '400',
     textAlign: 'left',
+  },
+  engineSelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  engineButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#BBDEFB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  engineButtonActive: {
+    backgroundColor: '#1976D2',
+    borderColor: '#1976D2',
+  },
+  engineButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1976D2',
+  },
+  engineButtonTextActive: {
+    color: '#FFFFFF',
   },
 });
 

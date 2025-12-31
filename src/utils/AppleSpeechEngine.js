@@ -13,7 +13,7 @@ class AppleSpeechManager {
   }
 
   setupEventListeners() {
-    // Handle speech results
+    // Handle speech results SES YAZIYA DÖNÜŞTÜĞÜNDE BU ÇALIŞIR.
     Voice.onSpeechResults = (e) => {
       if (e.value && e.value.length > 0 && this.onResultCallback) {
         // Return the most recent transcription result
@@ -27,7 +27,7 @@ class AppleSpeechManager {
       this.isSearching = true;
     };
 
-    // Handle speech end - auto-restart if still supposed to be searching
+    // Handle speech end - auto-restart if still supposed to be searching KONUŞMA BİTTİĞİNDE BU ÇALIŞIR.
     Voice.onSpeechEnd = () => {
       this.isSearching = false;
       if (this.shouldBeSearching) {
@@ -35,7 +35,7 @@ class AppleSpeechManager {
       }
     };
 
-    // Handle speech errors - auto-restart if still supposed to be searching
+    // Handle speech errors - auto-restart if still supposed to be searching HATA OLDUĞUNDA SESSİZLİK OLDUĞUNDA BU ÇALIŞIR.
     Voice.onSpeechError = (e) => {
       console.warn('Speech recognition error:', e.error);
       this.isSearching = false;
