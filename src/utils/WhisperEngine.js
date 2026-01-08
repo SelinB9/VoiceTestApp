@@ -30,8 +30,8 @@ class WhisperManager {
       const { stop, subscribe } = await this.whisperContext.transcribeRealtime({
         language: 'en',
         beamSize: 1,
-        audioStepMs: 1000,
-        audioSliceMs: 1000,
+        audioStepMs: 500,
+        audioSliceMs: 500,
       });
 
       this.stopFunc = stop;

@@ -10,8 +10,9 @@ import {
 } from 'react-native';
 import AppleSpeechManager from '../utils/AppleSpeechEngine';
 import WhisperManager from '../utils/WhisperEngine';
-// import SherpaManager from '../utils/SherpaEngine';
-
+ import AppleIntelligenceManager from '../utils/AppleIntelligenceEngine';
+ import { socket } from '../utils/socket';
+ 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const LessonScreen = () => {
@@ -28,15 +29,22 @@ const LessonScreen = () => {
       if (activeEngine === 'Apple') {
         await AppleSpeechManager.startSearching((text) => {
           setTranscribedText(text);
+          socket.emit('subtitle', text);
         });
       } else if (activeEngine === 'Whisper') {
         await WhisperManager.startSearching((text) => {
           setTranscribedText(text);
+          socket.emit('subtitle', text);
         });
-      } else if (activeEngine === 'Sherpa') {
-        // Sherpa engine not implemented yet
-        Alert.alert('Sherpa Engine', 'Sherpa engine henüz implement edilmedi.');
-        setIsLessonActive(false);
+      } else if (activeEngine === 'AppleIntelligence') {
+       
+        await AppleIntelligenceManager.startSearching((text) => {
+          setTranscribedText(text); // <--- YENİ MOTOR İÇİN BURAYA EKLEDİK
+          // Buraya socket.emit('mesaj', text) ekleyerek öğrenciye de gönderebilirsin.
+          if (typeof socket !== 'undefined') {
+            socket.emit('subtitle', text);
+          }
+        });
       }
     } catch (error) {
       console.error('Error starting lesson:', error);
@@ -51,13 +59,13 @@ const LessonScreen = () => {
 
   const handleStopLesson = useCallback(async () => {
     try {
-      // Stop voice recognition based on active engine
+      // Stop voice recognition based on active  // DURDURMA FONKSİYONUNU EKLEDİK
       if (activeEngine === 'Apple') {
         await AppleSpeechManager.stopSearching();
       } else if (activeEngine === 'Whisper') {
         await WhisperManager.stopSearching();
-      } else if (activeEngine === 'Sherpa') {
-        // Sherpa engine not implemented yet
+      } else if (activeEngine === 'AppleIntelligence') {
+        await AppleIntelligenceManager.stopSearching();
       }
       setIsLessonActive(false);
     } catch (error) {
@@ -73,8 +81,8 @@ const LessonScreen = () => {
           AppleSpeechManager.stopSearching();
         } else if (activeEngine === 'Whisper') {
           WhisperManager.stopSearching();
-        } else if (activeEngine === 'Sherpa') {
-          // Sherpa engine not implemented yet
+        } else if (activeEngine === 'AppleIntelligence') {
+          AppleIntelligenceManager.stopSearching();
         }
       }
     };
@@ -134,23 +142,23 @@ const LessonScreen = () => {
           <TouchableOpacity
             style={[
               styles.engineButton,
-              activeEngine === 'Sherpa' && styles.engineButtonActive,
+              activeEngine === 'AppleIntelligence' && styles.engineButtonActive,
             ]}
             onPress={() => {
               if (isLessonActive) {
                 Alert.alert('Uyarı', 'Lütfen önce dersi durdurun.');
                 return;
               }
-              setActiveEngine('Sherpa');
+              setActiveEngine('AppleIntelligence');
             }}
           >
             <Text
               style={[
                 styles.engineButtonText,
-                activeEngine === 'Sherpa' && styles.engineButtonTextActive,
+                activeEngine === 'AppleIntelligence' && styles.engineButtonTextActive,
               ]}
             >
-              Sherpa
+              AppleIntelligence
             </Text>
           </TouchableOpacity>
         </View>
